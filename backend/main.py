@@ -4,9 +4,12 @@ from pydantic import BaseModel
 import sqlite3
 import pandas as pd
 
+# -----------------------------
+# CREATE FASTAPI APP
+# -----------------------------
 app = FastAPI()
 
-# allow frontend requests
+# allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,13 +18,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -----------------------------
+# REQUEST MODEL
+# -----------------------------
 class QueryRequest(BaseModel):
     prompt: str
 
 
+# -----------------------------
+# TEST ROUTE
+# -----------------------------
 @app.get("/")
 def home():
-    return {"message": "AskBI backend is running"}
+    return {"message": "AskBI backend is running 🚀"}
 
 
 # -----------------------------
@@ -30,14 +39,17 @@ def home():
 def run_query(sql_query: str):
 
     try:
-        with sqlite3.connect("campaigns.db") as conn:
-            df = pd.read_sql_query(sql_query, conn)
+        conn = sqlite3.connect("campaigns.db")
+
+        df = pd.read_sql_query(sql_query, conn)
+
+        conn.close()
 
         return df
 
     except Exception as e:
         print("SQL ERROR:", e)
-        return None
+        return pd.DataFrame()
 
 
 # -----------------------------
@@ -48,85 +60,87 @@ def generate_dashboard(request: QueryRequest):
 
     prompt = request.prompt.lower()
 
-    try:
+    # -----------------------------
+    # REVENUE BY CHANNEL
+    # -----------------------------
+    if "revenue" in prompt and "channel" in prompt:
 
-        # Revenue by Channel
-        if "revenue" in prompt and "channel" in prompt:
+        sql = """
+        SELECT channel_used, SUM(revenue) as revenue
+        FROM campaigns
+        GROUP BY channel_used
+        ORDER BY revenue DESC
+        """
 
-            sql = """
-            SELECT Channel_Used, SUM(Revenue) as Revenue
-            FROM campaigns
-            GROUP BY Channel_Used
-            ORDER BY Revenue DESC
-            """
-
-            df = run_query(sql)
-
-            return {
-                "charts": [
-                    {
-                        "chart_type": "bar",
-                        "title": "Revenue by Channel",
-                        "x_axis": "Channel_Used",
-                        "y_axis": "Revenue",
-                        "data": df.to_dict(orient="records")
-                    }
-                ]
-            }
-
-        # ROI by Campaign Type
-        if "roi" in prompt:
-
-            sql = """
-            SELECT Campaign_Type, AVG(ROI) as ROI
-            FROM campaigns
-            GROUP BY Campaign_Type
-            ORDER BY ROI DESC
-            """
-
-            df = run_query(sql)
-
-            return {
-                "charts": [
-                    {
-                        "chart_type": "bar",
-                        "title": "ROI by Campaign Type",
-                        "x_axis": "Campaign_Type",
-                        "y_axis": "ROI",
-                        "data": df.to_dict(orient="records")
-                    }
-                ]
-            }
-
-        # Conversions by Audience
-        if "conversion" in prompt or "audience" in prompt:
-
-            sql = """
-            SELECT Target_Audience, SUM(Conversions) as Conversions
-            FROM campaigns
-            GROUP BY Target_Audience
-            ORDER BY Conversions DESC
-            """
-
-            df = run_query(sql)
-
-            return {
-                "charts": [
-                    {
-                        "chart_type": "pie",
-                        "title": "Conversions by Audience",
-                        "x_axis": "Target_Audience",
-                        "y_axis": "Conversions",
-                        "data": df.to_dict(orient="records")
-                    }
-                ]
-            }
-
-        return {"message": "Sorry, I couldn't understand the query yet."}
-
-    except Exception as e:
+        df = run_query(sql)
 
         return {
-            "error": "Server error",
-            "details": str(e)
+            "charts": [
+                {
+                    "chart_type": "bar",
+                    "title": "Revenue by Channel",
+                    "x_axis": "channel_used",
+                    "y_axis": "revenue",
+                    "data": df.to_dict(orient="records")
+                }
+            ]
         }
+
+    # -----------------------------
+    # ROI BY CAMPAIGN TYPE
+    # -----------------------------
+    if "roi" in prompt:
+
+        sql = """
+        SELECT campaign_type, AVG(roi) as roi
+        FROM campaigns
+        GROUP BY campaign_type
+        ORDER BY roi DESC
+        """
+
+        df = run_query(sql)
+
+        return {
+            "charts": [
+                {
+                    "chart_type": "bar",
+                    "title": "ROI by Campaign Type",
+                    "x_axis": "campaign_type",
+                    "y_axis": "roi",
+                    "data": df.to_dict(orient="records")
+                }
+            ]
+        }
+
+    # -----------------------------
+    # CONVERSIONS BY AUDIENCE
+    # -----------------------------
+    if "conversion" in prompt or "audience" in prompt:
+
+        sql = """
+        SELECT target_audience, SUM(conversions) as conversions
+        FROM campaigns
+        GROUP BY target_audience
+        ORDER BY conversions DESC
+        """
+
+        df = run_query(sql)
+
+        return {
+            "charts": [
+                {
+                    "chart_type": "pie",
+                    "title": "Conversions by Audience",
+                    "x_axis": "target_audience",
+                    "y_axis": "conversions",
+                    "data": df.to_dict(orient="records")
+                }
+            ]
+        }
+
+    # -----------------------------
+    # DEFAULT FALLBACK
+    # -----------------------------
+    return {
+        "message": "Sorry, I couldn't understand the query yet."
+    }
