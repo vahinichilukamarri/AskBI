@@ -284,7 +284,7 @@ export default function LandingPage({ onNavigate }) {
           <div style={{ maxWidth:1280, margin:"0 auto", width:"100%", padding:"110px 40px 60px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"center", position:"relative", zIndex:1 }}>
 
             {/* LEFT */}
-            <div style={{ animation:"fadeUp .8s ease .1s both", display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
+            <div style={{ animation:"fadeUp .8s ease .1s both" }}>
               <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(79,70,229,0.1)", border:"1px solid rgba(79,70,229,0.32)", borderRadius:100, padding:"5px 14px 5px 6px", marginBottom:28 }}>
                 <div style={{ background:"linear-gradient(135deg,#4F46E5,#06B6D4)", borderRadius:100, padding:"3px 10px", fontSize:10, fontWeight:700, color:"#fff", fontFamily:"monospace" }}>NEW</div>
                 <span style={{ fontSize:12, color:"rgba(255,255,255,0.55)" }}>Powered by next-gen AI reasoning</span>
