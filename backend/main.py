@@ -1,15 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import sqlite3
 import pandas as pd
 
+from gemini_sql import generate_sql
+
 # -----------------------------
 # CREATE FASTAPI APP
 # -----------------------------
-app = FastAPI()
+app = FastAPI(title="AskBI Backend", version="1.0.0")
 
-# allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,7 +26,6 @@ app.add_middleware(
 class QueryRequest(BaseModel):
     prompt: str
 
-
 # -----------------------------
 # TEST ROUTE
 # -----------------------------
@@ -32,115 +33,120 @@ class QueryRequest(BaseModel):
 def home():
     return {"message": "AskBI backend is running 🚀"}
 
-
 # -----------------------------
 # DATABASE QUERY FUNCTION
 # -----------------------------
 def run_query(sql_query: str):
-
     try:
         conn = sqlite3.connect("campaigns.db")
-
         df = pd.read_sql_query(sql_query, conn)
-
         conn.close()
-
-        return df
-
+        return df, None
     except Exception as e:
         print("SQL ERROR:", e)
-        return pd.DataFrame()
+        return pd.DataFrame(), str(e)
 
+# -----------------------------
+# CHART TYPE SUGGESTER
+# -----------------------------
+def suggest_chart_type(columns: list, row_count: int) -> str:
+    cols_lower = [c.lower() for c in columns]
+
+    # Time series → line chart
+    if "date" in cols_lower or "month" in cols_lower or "year" in cols_lower:
+        return "line"
+
+    # Single aggregated value → stat card
+    if row_count == 1 and len(columns) <= 3:
+        return "stat"
+
+    # 2 columns → bar
+    if len(columns) == 2:
+        return "bar"
+
+    # Many categories → pie (if small number of rows)
+    if row_count <= 6 and len(columns) == 2:
+        return "pie"
+
+    # Default → bar
+    return "bar"
 
 # -----------------------------
 # MAIN DASHBOARD ENDPOINT
 # -----------------------------
 @app.post("/generate-dashboard")
 def generate_dashboard(request: QueryRequest):
+    prompt = request.prompt
 
-    prompt = request.prompt.lower()
+    # Step 1 — Generate SQL
+    try:
+        sql_query = generate_sql(prompt)
+        print(f"\n[AskBI] Prompt   : {prompt}")
+        print(f"[AskBI] SQL Query: {sql_query}\n")
+    except RuntimeError as e:
+        return JSONResponse(
+            status_code=429,
+            content={"error": str(e), "sql_generated": None}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"SQL generation failed: {str(e)}", "sql_generated": None}
+        )
 
-    # -----------------------------
-    # REVENUE BY CHANNEL
-    # -----------------------------
-    if "revenue" in prompt and "channel" in prompt:
+    # Step 2 — Run SQL against DB
+    df, sql_error = run_query(sql_query)
 
-        sql = """
-        SELECT channel_used, SUM(revenue) as revenue
-        FROM campaigns
-        GROUP BY channel_used
-        ORDER BY revenue DESC
-        """
+    if sql_error:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": f"SQL execution failed: {sql_error}",
+                "sql_generated": sql_query
+            }
+        )
 
-        df = run_query(sql)
+    if df.empty:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": "Query returned no results. Try rephrasing your question.",
+                "sql_generated": sql_query
+            }
+        )
 
-        return {
-            "charts": [
-                {
-                    "chart_type": "bar",
-                    "title": "Revenue by Channel",
-                    "x_axis": "channel_used",
-                    "y_axis": "revenue",
-                    "data": df.to_dict(orient="records")
-                }
-            ]
-        }
+    # Step 3 — Build clean flat response
+    columns    = df.columns.tolist()
+    records    = df.to_dict(orient="records")
+    chart_type = suggest_chart_type(columns, len(records))
+    x_key      = columns[0] if columns else None
+    y_key      = columns[1] if len(columns) > 1 else columns[0]
 
-    # -----------------------------
-    # ROI BY CAMPAIGN TYPE
-    # -----------------------------
-    if "roi" in prompt:
-
-        sql = """
-        SELECT campaign_type, AVG(roi) as roi
-        FROM campaigns
-        GROUP BY campaign_type
-        ORDER BY roi DESC
-        """
-
-        df = run_query(sql)
-
-        return {
-            "charts": [
-                {
-                    "chart_type": "bar",
-                    "title": "ROI by Campaign Type",
-                    "x_axis": "campaign_type",
-                    "y_axis": "roi",
-                    "data": df.to_dict(orient="records")
-                }
-            ]
-        }
-
-    # -----------------------------
-    # CONVERSIONS BY AUDIENCE
-    # -----------------------------
-    if "conversion" in prompt or "audience" in prompt:
-
-        sql = """
-        SELECT target_audience, SUM(conversions) as conversions
-        FROM campaigns
-        GROUP BY target_audience
-        ORDER BY conversions DESC
-        """
-
-        df = run_query(sql)
-
-        return {
-            "charts": [
-                {
-                    "chart_type": "pie",
-                    "title": "Conversions by Audience",
-                    "x_axis": "target_audience",
-                    "y_axis": "conversions",
-                    "data": df.to_dict(orient="records")
-                }
-            ]
-        }
-
-    # -----------------------------
-    # DEFAULT FALLBACK
-    # -----------------------------
     return {
-        "message": "Sorry, I couldn't understand the query yet."
+        "sql_generated": sql_query,
+        "chart_type":    chart_type,
+        "x_axis":        x_key,
+        "y_axis":        y_key,
+        "title":         prompt[:60],
+        "data":          records,
+        "row_count":     len(records)
+    }
+
+
+# -----------------------------
+# HEALTH CHECK ENDPOINT
+# -----------------------------
+@app.get("/health")
+def health():
+    try:
+        conn = sqlite3.connect("campaigns.db")
+        conn.execute("SELECT COUNT(*) FROM campaigns")
+        conn.close()
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return {
+        "status":   "ok",
+        "database": db_status
     }
