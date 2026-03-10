@@ -300,7 +300,7 @@ function EmptyState() {
 function Navbar({ onHome }) {
   return (
     <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(5,8,15,0.9)", backdropFilter:"blur(24px)", borderBottom:"1px solid rgba(79,70,229,0.12)" }}>
-      <div style={{ maxWidth:1280, margin:"0 auto", height:62, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 48px" }}>
+      <div style={{ maxWidth:1280, margin:"0 auto", height:62, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px" }}>
         <div onClick={onHome} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
           <div style={{ width:33, height:33, borderRadius:9, background:"linear-gradient(135deg,#4F46E5,#06B6D4)", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:15, color:"#fff", boxShadow:"0 0 18px rgba(79,70,229,0.5)" }}>A</div>
           <div>
@@ -401,8 +401,19 @@ export default function DashboardPage({ onHome }) {
         </div>
 
         {/* ── CONTENT LAYER ── */}
-        <div style={{ position:"relative", zIndex:1 }}>
-          <Navbar onHome={onHome}/>
+        <Navbar onHome={onHome}/>
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            minHeight: "100vh",
+            width:"100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+      >
 
           {/* ══════════════════════════════════════════
               HERO  —  fully centered, no left drift
@@ -410,11 +421,14 @@ export default function DashboardPage({ onHome }) {
           <div style={{
             /* THIS is the key fix: full width, flex column, center everything */
             width:"100%",
+            height:"100vh",
             display:"flex",
             flexDirection:"column",
             alignItems:"center",       /* horizontal center */
             textAlign:"center",
+            justifyContent:"center",
             padding:"68px 24px 48px",
+            margin:"0 auto"
           }}>
 
             {/* Badge */}
