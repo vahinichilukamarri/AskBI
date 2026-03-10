@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Navbar from "./Navbar";
 
 const TYPING_EXAMPLES = [
   "Show revenue by marketing channel for Q3...",
@@ -219,7 +220,7 @@ export default function LandingPage({ onNavigate }) {
 
   // Both the typewriter Generate button AND Get Started navigate to dashboard
   const handleGenerate = () => {
-    onNavigate();
+    onNavigate("home");
   };
 
   return (
@@ -254,29 +255,7 @@ export default function LandingPage({ onNavigate }) {
         <div style={{ position:"fixed", inset:0, background:"repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px)", pointerEvents:"none", zIndex:9998 }}/>
 
         {/* ── NAVBAR ── */}
-        <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:100, background:"rgba(5,8,15,0.85)", backdropFilter:"blur(24px)", borderBottom:"1px solid rgba(79,70,229,0.1)" }}>
-          <div style={{ maxWidth:1280, margin:"0 auto", height:66, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 40px" }}>
-
-            {/* Logo */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
-              <div style={{ width:34, height:34, borderRadius:9, background:"linear-gradient(135deg,#4F46E5,#06B6D4)", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16, color:"#fff", boxShadow:"0 0 20px rgba(79,70,229,0.55)" }}>A</div>
-              <div>
-                <div style={{ fontWeight:800, fontSize:19, background:"linear-gradient(135deg,#fff,#06B6D4)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:1.1 }}>AskBI</div>
-                <div style={{ fontSize:8, color:"rgba(6,182,212,0.55)", fontFamily:"monospace", letterSpacing:2.5 }}>CONVERSATIONAL BI</div>
-              </div>
-            </div>
-
-            {/* Nav links — centered absolutely */}
-            <div style={{ display:"flex", gap:36, position:"absolute", left:"50%", transform:"translateX(-50%)" }}>
-              {["About","Features","How it Works","Contact"].map(l => (
-                <a key={l} href="#" className="nav-a">{l}</a>
-              ))}
-            </div>
-
-            {/* Get Started */}
-            <GetStartedButton onClick={handleGenerate}/>
-          </div>
-        </nav>
+        <Navbar onNavigate={onNavigate} active="home" />
 
         {/* ── HERO ── */}
         <section style={{ position:"relative", minHeight:"100vh", display:"flex", alignItems:"center", overflow:"hidden" }}>
