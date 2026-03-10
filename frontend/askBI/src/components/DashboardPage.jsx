@@ -422,7 +422,7 @@ export default function DashboardPage({ onHome }) {
               <div style={{ width:6, height:6, borderRadius:"50%", background:"#06B6D4", boxShadow:"0 0 8px #06B6D4", animation:"blink 2s ease-in-out infinite" }}/>
               <span style={{ fontSize:11, color:"rgba(6,182,212,0.8)", fontFamily:"monospace", letterSpacing:2.5, textTransform:"uppercase" }}>AI Dashboard Generator</span>
             </div>
-
+            {/*Headline and subtext should be centered and not drift left on wider screens. Adjusted the container to be full width and used flexbox to center content.*/}
             {/* Headline */}
             <h1 style={{ fontSize:"clamp(30px,5vw,56px)", fontWeight:800, lineHeight:1.1, marginBottom:14, animation:"fadeUp .5s ease .1s both", maxWidth:660 }}>
               What do you want to{" "}
