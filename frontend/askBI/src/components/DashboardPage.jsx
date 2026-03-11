@@ -483,7 +483,7 @@ function ChatThread({ history, onFollowUp, loading }) {
 // ════════════════════════════════════════════════════════════
 // Navbar
 // ════════════════════════════════════════════════════════════
-function Navbar({ onHome }) {
+function Navbar({ onHome, onExportPDF, hasResults, exporting }) {
   return (
     <nav style={{ position:"sticky", top:0, zIndex:100,
       background:"rgba(5,8,15,0.92)", backdropFilter:"blur(28px)",
@@ -503,7 +503,7 @@ function Navbar({ onHome }) {
               letterSpacing:2.5, marginTop:-2 }}>CONVERSATIONAL BI</div>
           </div>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:18 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
           <div style={{ display:"flex", alignItems:"center", gap:7,
             background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.25)",
             borderRadius:100, padding:"5px 14px" }}>
@@ -511,13 +511,28 @@ function Navbar({ onHome }) {
             <span style={{ fontSize:11, color:"rgba(34,197,94,0.8)", fontFamily:"monospace" }}>AI Ready</span>
           </div>
           <div style={{ height:18, width:1, background:"rgba(255,255,255,0.08)" }}/>
-          {["About","Features","Contact"].map(l => (
-            <a key={l} href="#" style={{ color:"rgba(255,255,255,0.4)", textDecoration:"none", fontSize:13 }}
-              onMouseEnter={e => e.target.style.color="#fff"}
-              onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.4)"}>
-              {l}
-            </a>
-          ))}
+          <button
+            onClick={onExportPDF}
+            disabled={!hasResults || exporting}
+            style={{
+              display:"flex", alignItems:"center", gap:8,
+              background: hasResults && !exporting
+                ? "linear-gradient(135deg,#4F46E5,#06B6D4)"
+                : "rgba(255,255,255,0.05)",
+              border:`1px solid ${hasResults && !exporting ? "transparent" : "rgba(255,255,255,0.1)"}`,
+              borderRadius:12, padding:"9px 20px",
+              color: hasResults && !exporting ? "#fff" : "rgba(255,255,255,0.25)",
+              fontSize:13, fontWeight:700, fontFamily:"'Sora',sans-serif",
+              cursor: hasResults && !exporting ? "pointer" : "not-allowed",
+              transition:"all 0.25s",
+              boxShadow: hasResults && !exporting ? "0 4px 18px rgba(79,70,229,0.45)" : "none",
+            }}
+            onMouseEnter={e => { if(hasResults && !exporting) e.currentTarget.style.transform="scale(1.04)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform="scale(1)"; }}
+          >
+            <span style={{ fontSize:15 }}>{exporting ? "⏳" : "⬇"}</span>
+            {exporting ? "Generating PDF..." : "Export PDF"}
+          </button>
         </div>
       </div>
     </nav>
@@ -539,7 +554,124 @@ export default function DashboardPage({ onHome }) {
   const [activeTable,   setActiveTable]   = useState("campaigns");
   // ── NEW state ──────────────────────────────────────────────
   const [chatHistory,   setChatHistory]   = useState([]);   // {role, content}[]
+  const [exporting,     setExporting]     = useState(false);
   const resultsRef = useRef(null);
+  const pdfRef     = useRef(null);
+
+  // ── Load jsPDF + html2canvas from CDN once ────────────────────────
+  useEffect(() => {
+    const loadScript = (src) => new Promise((res, rej) => {
+      if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+      const s = document.createElement("script");
+      s.src = src; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  }, []);
+
+  // ── Export PDF ────────────────────────────────────────────────────
+  const handleExportPDF = async () => {
+    if (!pdfRef.current || exporting) return;
+    setExporting(true);
+    try {
+      const { jsPDF } = window.jspdf;
+      const canvas = await window.html2canvas(pdfRef.current, {
+        backgroundColor: "#05080f",
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      const imgData  = canvas.toDataURL("image/png");
+      const pdf      = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+      const pageW    = pdf.internal.pageSize.getWidth();
+      const pageH    = pdf.internal.pageSize.getHeight();
+      const margin   = 12;
+      const usableW  = pageW - margin * 2;
+
+      // ── Header bar ──
+      pdf.setFillColor(5, 8, 15);
+      pdf.rect(0, 0, pageW, pageH, "F");
+
+      pdf.setFillColor(79, 70, 229);
+      pdf.rect(0, 0, pageW, 14, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("AskBI — AI Dashboard Export", margin, 9.5);
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(200, 200, 255);
+      pdf.text(new Date().toLocaleString(), pageW - margin, 9.5, { align:"right" });
+
+      // ── Query label ──
+      pdf.setFontSize(9);
+      pdf.setTextColor(6, 182, 212);
+      pdf.text("Query:", margin, 22);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      const queryLines = pdf.splitTextToSize(currentQuery, usableW - 20);
+      pdf.text(queryLines, margin + 18, 22);
+
+      // ── AI Insight text (latest assistant message) ──
+      const latestInsight = chatHistory.filter(m => m.role === "assistant").slice(-1)[0]?.content;
+      if (latestInsight) {
+        const insightY = 22 + queryLines.length * 5 + 4;
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(180, 180, 200);
+        const insightLines = pdf.splitTextToSize("AI Insight: " + latestInsight, usableW);
+        pdf.text(insightLines, margin, insightY);
+
+        // ── Chart image below text ──
+        const chartY = insightY + insightLines.length * 4 + 6;
+        const imgH   = (canvas.height / canvas.width) * usableW;
+
+        if (chartY + imgH > pageH - margin) {
+          pdf.addPage();
+          pdf.setFillColor(5, 8, 15);
+          pdf.rect(0, 0, pageW, pageH, "F");
+          pdf.addImage(imgData, "PNG", margin, margin, usableW, imgH);
+        } else {
+          pdf.addImage(imgData, "PNG", margin, chartY, usableW, imgH);
+        }
+      } else {
+        const imgH = (canvas.height / canvas.width) * usableW;
+        pdf.addImage(imgData, "PNG", margin, 30, usableW, imgH);
+      }
+
+      // ── KPI summary table at the bottom if fits ──
+      if (kpis) {
+        pdf.addPage();
+        pdf.setFillColor(5, 8, 15);
+        pdf.rect(0, 0, pageW, pageH, "F");
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(6, 182, 212);
+        pdf.text("Key Metrics Summary", margin, 20);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        kpis.forEach((kpi, i) => {
+          const y = 30 + i * 10;
+          pdf.setTextColor(150, 150, 180);
+          pdf.text(kpi.label, margin, y);
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFont("helvetica", "bold");
+          pdf.text(String(kpi.value), margin + 40, y);
+          pdf.setFont("helvetica", "normal");
+        });
+      }
+
+      pdf.save(`AskBI_${currentQuery.slice(0, 30).replace(/\s+/g, "_")}.pdf`);
+    } catch(err) {
+      console.error("PDF export failed:", err);
+      alert("PDF export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // ── Core fetch function shared by both initial query and follow-ups ──
   const fetchDashboard = async (prompt, history) => {
@@ -671,7 +803,7 @@ export default function DashboardPage({ onHome }) {
         </div>
 
         <div style={{ position:"relative", zIndex:1 }}>
-          <Navbar onHome={onHome}/>
+          <Navbar onHome={onHome} onExportPDF={handleExportPDF} hasResults={hasResults} exporting={exporting}/>
 
           {/* Hero */}
           <div style={{ width:"100%", display:"flex", flexDirection:"column",
@@ -778,6 +910,7 @@ export default function DashboardPage({ onHome }) {
           </div>
 
           {/* Results */}
+          <div ref={pdfRef}>
           <div ref={resultsRef} style={{ width:"100%", maxWidth:1400, margin:"0 auto", padding:"0 48px 120px" }}>
             {error && <ErrorBanner message={error} onDismiss={() => setError(null)}/>}
             {loading && <Loader/>}
@@ -843,6 +976,7 @@ export default function DashboardPage({ onHome }) {
             )}
           </div>
         </div>
+          </div>{/* /pdfRef */}
       </div>
     </>
   );
