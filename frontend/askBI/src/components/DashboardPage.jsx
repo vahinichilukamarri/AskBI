@@ -16,7 +16,6 @@ const EXAMPLE_PROMPTS = [
 
 const CHART_COLORS = ["#06B6D4","#4F46E5","#8B5CF6","#EC4899","#F59E0B","#10B981","#3B82F6","#F97316"];
 
-// ── Format numbers nicely ─────────────────────────────────────────
 function fmt(v) {
   if (typeof v !== "number") return v;
   if (Math.abs(v) >= 1_000_000) return `${(v/1_000_000).toFixed(1)}M`;
@@ -25,15 +24,12 @@ function fmt(v) {
   return v.toLocaleString();
 }
 
-// ── Custom Tooltip ────────────────────────────────────────────────
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background:"rgba(8,12,24,0.97)",
-      border:"1px solid rgba(6,182,212,0.35)",
-      borderRadius:12, padding:"12px 18px",
-      fontFamily:"monospace", fontSize:13,
+      background:"rgba(8,12,24,0.97)", border:"1px solid rgba(6,182,212,0.35)",
+      borderRadius:12, padding:"12px 18px", fontFamily:"monospace", fontSize:13,
       boxShadow:"0 8px 32px rgba(0,0,0,0.6)"
     }}>
       <div style={{ color:"rgba(255,255,255,0.55)", marginBottom:6, fontSize:11 }}>{label}</div>
@@ -46,26 +42,19 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-// ── Smart tick — truncate long labels ─────────────────────────────
 function SmartTick({ x, y, payload, maxLen = 14 }) {
   const label = String(payload.value);
   const display = label.length > maxLen ? label.slice(0, maxLen) + "…" : label;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text
-        x={0} y={0} dy={12}
-        textAnchor="middle"
-        fill="rgba(255,255,255,0.45)"
-        fontSize={11}
-        fontFamily="monospace"
-      >
+      <text x={0} y={0} dy={12} textAnchor="middle"
+        fill="rgba(255,255,255,0.45)" fontSize={11} fontFamily="monospace">
         {display}
       </text>
     </g>
   );
 }
 
-// ── Chart Renderer ────────────────────────────────────────────────
 function ChartRenderer({ type, data, xKey, yKey, color }) {
   const c = color || "#06B6D4";
   const isSmall = data.length <= 8;
@@ -74,11 +63,8 @@ function ChartRenderer({ type, data, xKey, yKey, color }) {
 
   if (type === "bar") return (
     <ResponsiveContainer width="100%" height={chartH}>
-      <BarChart
-        data={data}
-        margin={{ top:20, right:30, left:10, bottom:bottomMargin }}
-        barCategoryGap={data.length > 15 ? "15%" : "28%"}
-      >
+      <BarChart data={data} margin={{ top:20, right:30, left:10, bottom:bottomMargin }}
+        barCategoryGap={data.length > 15 ? "15%" : "28%"}>
         <defs>
           {CHART_COLORS.map((col, i) => (
             <linearGradient key={i} id={`barGrad${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -88,32 +74,18 @@ function ChartRenderer({ type, data, xKey, yKey, color }) {
           ))}
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false}/>
-        <XAxis
-          dataKey={xKey}
-          tick={<SmartTick maxLen={data.length > 10 ? 10 : 16}/>}
-          axisLine={{ stroke:"rgba(255,255,255,0.08)" }}
-          tickLine={false}
-          interval={0}
-          angle={data.length > 6 ? -30 : 0}
-          textAnchor={data.length > 6 ? "end" : "middle"}
-        />
-        <YAxis
-          tickFormatter={fmt}
+        <XAxis dataKey={xKey} tick={<SmartTick maxLen={data.length > 10 ? 10 : 16}/>}
+          axisLine={{ stroke:"rgba(255,255,255,0.08)" }} tickLine={false} interval={0}
+          angle={data.length > 6 ? -30 : 0} textAnchor={data.length > 6 ? "end" : "middle"}/>
+        <YAxis tickFormatter={fmt}
           tick={{ fill:"rgba(255,255,255,0.35)", fontSize:11, fontFamily:"monospace" }}
-          axisLine={false} tickLine={false} width={65}
-        />
+          axisLine={false} tickLine={false} width={65}/>
         <Tooltip content={<CustomTooltip/>} cursor={{ fill:"rgba(255,255,255,0.03)" }}/>
         <Bar dataKey={yKey} radius={[8,8,0,0]} maxBarSize={72}>
-          {data.map((_, i) => (
-            <Cell key={i} fill={`url(#barGrad${i % CHART_COLORS.length})`}/>
-          ))}
+          {data.map((_, i) => <Cell key={i} fill={`url(#barGrad${i % CHART_COLORS.length})`}/>)}
           {isSmall && (
-            <LabelList
-              dataKey={yKey}
-              position="top"
-              formatter={fmt}
-              style={{ fill:"rgba(255,255,255,0.5)", fontSize:10, fontFamily:"monospace" }}
-            />
+            <LabelList dataKey={yKey} position="top" formatter={fmt}
+              style={{ fill:"rgba(255,255,255,0.5)", fontSize:10, fontFamily:"monospace" }}/>
           )}
         </Bar>
       </BarChart>
@@ -124,26 +96,16 @@ function ChartRenderer({ type, data, xKey, yKey, color }) {
     <ResponsiveContainer width="100%" height={chartH}>
       <LineChart data={data} margin={{ top:20, right:30, left:10, bottom:bottomMargin }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false}/>
-        <XAxis
-          dataKey={xKey}
-          tick={<SmartTick/>}
-          axisLine={{ stroke:"rgba(255,255,255,0.08)" }}
-          tickLine={false} interval={0}
-          angle={data.length > 6 ? -30 : 0}
-          textAnchor={data.length > 6 ? "end" : "middle"}
-        />
-        <YAxis
-          tickFormatter={fmt}
+        <XAxis dataKey={xKey} tick={<SmartTick/>}
+          axisLine={{ stroke:"rgba(255,255,255,0.08)" }} tickLine={false} interval={0}
+          angle={data.length > 6 ? -30 : 0} textAnchor={data.length > 6 ? "end" : "middle"}/>
+        <YAxis tickFormatter={fmt}
           tick={{ fill:"rgba(255,255,255,0.35)", fontSize:11, fontFamily:"monospace" }}
-          axisLine={false} tickLine={false} width={65}
-        />
+          axisLine={false} tickLine={false} width={65}/>
         <Tooltip content={<CustomTooltip/>} cursor={{ stroke:c, strokeWidth:1, strokeDasharray:"4 4" }}/>
-        <Line
-          type="monotone" dataKey={yKey}
-          stroke={c} strokeWidth={3}
+        <Line type="monotone" dataKey={yKey} stroke={c} strokeWidth={3}
           dot={{ fill:c, strokeWidth:0, r:4 }}
-          activeDot={{ r:7, fill:c, stroke:"rgba(255,255,255,0.3)", strokeWidth:2 }}
-        />
+          activeDot={{ r:7, fill:c, stroke:"rgba(255,255,255,0.3)", strokeWidth:2 }}/>
       </LineChart>
     </ResponsiveContainer>
   );
@@ -174,32 +136,24 @@ function ChartRenderer({ type, data, xKey, yKey, color }) {
               </radialGradient>
             ))}
           </defs>
-          <Pie
-            data={data} dataKey={yKey} nameKey={xKey}
-            cx="50%" cy="50%"
-            innerRadius="35%" outerRadius="60%"
-            paddingAngle={3}
-            labelLine={false} label={renderLabel}
-          >
+          <Pie data={data} dataKey={yKey} nameKey={xKey}
+            cx="50%" cy="50%" innerRadius="35%" outerRadius="60%"
+            paddingAngle={3} labelLine={false} label={renderLabel}>
             {data.map((_, i) => (
               <Cell key={i} fill={`url(#pieGrad${i % CHART_COLORS.length})`}
                 stroke="rgba(0,0,0,0.3)" strokeWidth={2}/>
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip/>}/>
-          <Legend
-            iconType="circle" iconSize={8}
-            formatter={v => <span style={{ color:"rgba(255,255,255,0.55)", fontSize:11, fontFamily:"monospace" }}>{v}</span>}
-          />
+          <Legend iconType="circle" iconSize={8}
+            formatter={v => <span style={{ color:"rgba(255,255,255,0.55)", fontSize:11, fontFamily:"monospace" }}>{v}</span>}/>
         </PieChart>
       </ResponsiveContainer>
     );
   }
-
   return null;
 }
 
-// ── Chart Card ────────────────────────────────────────────────────
 function ChartCard({ dataset, index }) {
   const [chartType, setChartType] = useState(dataset.defaultType || "bar");
   const [hovered,   setHovered]   = useState(false);
@@ -207,28 +161,20 @@ function ChartCard({ dataset, index }) {
   const color = CHART_COLORS[index % CHART_COLORS.length];
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{
         background:"rgba(8,12,24,0.9)",
         border:`1px solid ${hovered ? "rgba(6,182,212,0.45)" : "rgba(79,70,229,0.2)"}`,
         borderRadius:22, padding:"28px 32px",
-        position:"relative", overflow:"hidden",
-        transition:"all 0.35s ease",
-        boxShadow: hovered
-          ? "0 28px 70px rgba(6,182,212,0.12), 0 0 0 1px rgba(6,182,212,0.08)"
-          : "0 4px 30px rgba(0,0,0,0.5)",
+        position:"relative", overflow:"hidden", transition:"all 0.35s ease",
+        boxShadow: hovered ? "0 28px 70px rgba(6,182,212,0.12)" : "0 4px 30px rgba(0,0,0,0.5)",
         transform: hovered ? "translateY(-4px)" : "translateY(0)",
         animation:`cardIn 0.6s cubic-bezier(0.34,1.2,0.64,1) ${index*0.1}s both`
-      }}
-    >
-      {/* Top glow line */}
+      }}>
       <div style={{ position:"absolute", top:0, left:0, right:0, height:2,
         background:`linear-gradient(90deg,transparent,${color},transparent)`,
         opacity: hovered ? 1 : 0.55, transition:"opacity 0.3s" }}/>
 
-      {/* Header */}
       <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:24, gap:14 }}>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:9, color:color, fontFamily:"monospace", letterSpacing:3,
@@ -237,17 +183,13 @@ function ChartCard({ dataset, index }) {
               background:color, boxShadow:`0 0 7px ${color}` }}/>
             Live Data
           </div>
-          <h3 style={{ fontSize:17, fontWeight:700, color:"#fff", lineHeight:1.35 }}>
-            {dataset.title}
-          </h3>
+          <h3 style={{ fontSize:17, fontWeight:700, color:"#fff", lineHeight:1.35 }}>{dataset.title}</h3>
           {dataset.rowCount !== undefined && (
             <div style={{ fontSize:11, color:"rgba(255,255,255,0.22)", fontFamily:"monospace", marginTop:5 }}>
               {dataset.rowCount} rows returned
             </div>
           )}
         </div>
-
-        {/* Chart type switcher */}
         <div style={{ display:"flex", gap:5, flexShrink:0 }}>
           {[{ t:"bar", icon:"▊" },{ t:"line", icon:"∿" },{ t:"pie", icon:"◉" }].map(({ t, icon }) => (
             <button key={t} onClick={() => setChartType(t)} style={{
@@ -261,10 +203,8 @@ function ChartCard({ dataset, index }) {
         </div>
       </div>
 
-      {/* Chart */}
       <ChartRenderer type={chartType} data={dataset.data} xKey={dataset.xKey} yKey={dataset.yKey} color={color}/>
 
-      {/* SQL toggle */}
       {dataset.sql && (
         <div style={{ marginTop:18 }}>
           <button onClick={() => setShowSQL(s => !s)} style={{
@@ -274,17 +214,12 @@ function ChartCard({ dataset, index }) {
           }}
             onMouseEnter={e => e.currentTarget.style.color="#4F46E5"}
             onMouseLeave={e => e.currentTarget.style.color="rgba(79,70,229,0.55)"}
-          >
-            🗄 {showSQL ? "Hide SQL ▲" : "Show SQL ▼"}
-          </button>
+          >🗄 {showSQL ? "Hide SQL ▲" : "Show SQL ▼"}</button>
           {showSQL && (
-            <div style={{
-              marginTop:10, background:"rgba(0,0,0,0.45)",
-              border:"1px solid rgba(79,70,229,0.22)",
-              borderRadius:11, padding:"12px 16px",
-              fontFamily:"monospace", fontSize:12,
-              color:"rgba(255,255,255,0.5)", lineHeight:1.8, wordBreak:"break-all"
-            }}>
+            <div style={{ marginTop:10, background:"rgba(0,0,0,0.45)",
+              border:"1px solid rgba(79,70,229,0.22)", borderRadius:11, padding:"12px 16px",
+              fontFamily:"monospace", fontSize:12, color:"rgba(255,255,255,0.5)",
+              lineHeight:1.8, wordBreak:"break-all" }}>
               {dataset.sql}
             </div>
           )}
@@ -294,7 +229,6 @@ function ChartCard({ dataset, index }) {
   );
 }
 
-// ── Loader ────────────────────────────────────────────────────────
 function Loader() {
   const steps = ["Parsing your query...","Generating SQL...","Querying database...","Building charts..."];
   const [step, setStep] = useState(0);
@@ -303,7 +237,7 @@ function Loader() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"90px 0", gap:28 }}>
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"60px 0", gap:28 }}>
       <div style={{ position:"relative", width:76, height:76 }}>
         <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:"2px solid rgba(79,70,229,0.12)" }}/>
         <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:"2.5px solid transparent",
@@ -317,17 +251,10 @@ function Loader() {
         <div style={{ fontSize:18, fontWeight:700, color:"#fff", marginBottom:10 }}>Generating AI Insights...</div>
         <div style={{ fontSize:13, color:"rgba(6,182,212,0.8)", fontFamily:"monospace" }}>{steps[step]}</div>
       </div>
-      <div style={{ display:"flex", gap:8 }}>
-        {[0,1,2,3].map(i => (
-          <div key={i} style={{ width:8, height:8, borderRadius:"50%", background:"#4F46E5",
-            animation:`bounce 1.4s ease-in-out ${i*0.18}s infinite` }}/>
-        ))}
-      </div>
     </div>
   );
 }
 
-// ── Error Banner ──────────────────────────────────────────────────
 function ErrorBanner({ message, onDismiss }) {
   return (
     <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)",
@@ -343,94 +270,219 @@ function ErrorBanner({ message, onDismiss }) {
   );
 }
 
-// ── Empty State ───────────────────────────────────────────────────
-function EmptyState() {
-  const cards = [
-    { icon:"📈", label:"Revenue Chart",  color:"#06B6D4" },
-    { icon:"🎯", label:"ROI Analysis",   color:"#4F46E5" },
-    { icon:"👥", label:"Audience Split", color:"#8B5CF6" },
-    { icon:"📊", label:"Trend Graph",    color:"#EC4899" },
-    { icon:"💰", label:"Conversions",    color:"#F59E0B" },
-    { icon:"🚀", label:"Campaign KPIs",  color:"#10B981" },
-  ];
+// ════════════════════════════════════════════════════════════
+// NEW: CSV Upload Panel
+// ════════════════════════════════════════════════════════════
+function CSVUploadPanel({ onUploadSuccess, onReset, activeTable }) {
+  const [dragging,    setDragging]    = useState(false);
+  const [uploading,   setUploading]   = useState(false);
+  const [uploadInfo,  setUploadInfo]  = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const fileRef = useRef(null);
+
+  const doUpload = async (file) => {
+    if (!file || !file.name.endsWith(".csv")) {
+      setUploadError("Please upload a .csv file.");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const res  = await fetch(`${API_URL}/upload-csv`, { method:"POST", body:form });
+      const data = await res.json();
+      if (!res.ok) { setUploadError(data.error || "Upload failed."); return; }
+      setUploadInfo(data);
+      onUploadSuccess(data);
+    } catch {
+      setUploadError("Could not reach backend.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    await fetch(`${API_URL}/reset-to-default`, { method:"POST" });
+    setUploadInfo(null);
+    setUploadError(null);
+    onReset();
+  };
+
   return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"20px 0 80px" }}>
-      <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:36 }}>
-        <div style={{ height:1, width:80, background:"linear-gradient(90deg,transparent,rgba(79,70,229,0.4))" }}/>
-        <span style={{ fontSize:11, color:"rgba(255,255,255,0.22)", fontFamily:"monospace",
-          letterSpacing:3, textTransform:"uppercase" }}>Dashboard Preview</span>
-        <div style={{ height:1, width:80, background:"linear-gradient(90deg,rgba(79,70,229,0.4),transparent)" }}/>
-      </div>
-      <div style={{ width:"100%", maxWidth:1100, background:"rgba(8,12,24,0.6)",
-        border:"1px dashed rgba(79,70,229,0.2)", borderRadius:24, padding:36,
-        position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:0, left:"-100%", height:1, width:"100%",
-          background:"linear-gradient(90deg,transparent,rgba(6,182,212,0.5),transparent)",
-          animation:"scanRight 3s ease-in-out infinite" }}/>
-        <div style={{ textAlign:"center", marginBottom:44 }}>
-          <div style={{ display:"inline-flex", alignItems:"center", gap:10,
-            background:"rgba(79,70,229,0.08)", border:"1px solid rgba(79,70,229,0.2)",
-            borderRadius:100, padding:"8px 22px", marginBottom:18 }}>
-            <div style={{ width:8, height:8, borderRadius:"50%", background:"rgba(6,182,212,0.5)",
-              animation:"blink 2s ease-in-out infinite" }}/>
-            <span style={{ fontSize:12, color:"rgba(255,255,255,0.4)", fontFamily:"monospace", letterSpacing:1 }}>Awaiting your query</span>
-          </div>
-          <h3 style={{ fontSize:24, fontWeight:700, color:"rgba(255,255,255,0.55)", marginBottom:10 }}>
-            Your insights will appear here
-          </h3>
-          <p style={{ fontSize:14, color:"rgba(255,255,255,0.22)", fontFamily:"monospace",
-            maxWidth:420, margin:"0 auto", lineHeight:1.8 }}>
-            Ask a question above → AI generates SQL → live charts render below
-          </p>
-        </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14, marginBottom:28 }}>
-          {["Total Revenue","Avg ROI","Conversions","Query Time"].map((label, i) => (
-            <div key={label} style={{ background:"rgba(255,255,255,0.02)",
-              border:"1px solid rgba(255,255,255,0.05)", borderRadius:14, padding:16 }}>
-              <div style={{ fontSize:9, color:"rgba(255,255,255,0.2)", fontFamily:"monospace",
-                letterSpacing:1, marginBottom:10 }}>{label}</div>
-              <div style={{ height:22, borderRadius:5, background:"rgba(255,255,255,0.05)",
-                marginBottom:8, width:"70%", animation:`shimmerBar 2s ease-in-out ${i*0.2}s infinite` }}/>
-              <div style={{ height:10, borderRadius:4, background:"rgba(255,255,255,0.03)", width:"40%" }}/>
-            </div>
-          ))}
-        </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
-          {cards.map(({ icon, label, color }, i) => (
-            <div key={label} style={{ background:"rgba(255,255,255,0.02)",
-              border:"1px solid rgba(255,255,255,0.05)", borderRadius:16, padding:20,
-              position:"relative", overflow:"hidden" }}>
-              <div style={{ position:"absolute", top:0, left:0, right:0, height:1,
-                background:`linear-gradient(90deg,transparent,${color}44,transparent)` }}/>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
-                <span style={{ fontSize:18, opacity:0.4 }}>{icon}</span>
-                <div style={{ fontSize:11, color:"rgba(255,255,255,0.2)", fontFamily:"monospace" }}>{label}</div>
-              </div>
-              <div style={{ display:"flex", alignItems:"flex-end", gap:5, height:70, marginBottom:12 }}>
-                {[55,80,40,90,65,75,50].map((h, j) => (
-                  <div key={j} style={{ flex:1, borderRadius:"3px 3px 0 0", height:`${h}%`,
-                    background:`${color}20`,
-                    animation:`ghostBar 2.5s ease-in-out ${(i*0.15)+(j*0.08)}s infinite` }}/>
-                ))}
-              </div>
-              <div style={{ height:8, borderRadius:4, background:"rgba(255,255,255,0.04)", width:"60%",
-                animation:`shimmerBar 2s ease-in-out ${i*0.3}s infinite` }}/>
-            </div>
-          ))}
-        </div>
-        <div style={{ textAlign:"center", marginTop:32 }}>
-          <span style={{ fontSize:12, color:"rgba(255,255,255,0.18)", fontFamily:"monospace" }}>
-            <span style={{ animation:"arrowBounce 1.5s ease-in-out infinite", display:"inline-block", marginRight:8 }}>↑</span>
-            Type a question above to bring this dashboard to life
-            <span style={{ animation:"arrowBounce 1.5s ease-in-out infinite 0.3s", display:"inline-block", marginLeft:8 }}>↑</span>
+    <div style={{ width:"100%", maxWidth:760, margin:"0 auto 32px", animation:"fadeUp .5s ease .25s both" }}>
+      {/* Active table badge */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:11, color:"rgba(255,255,255,0.3)", fontFamily:"monospace" }}>Active dataset:</span>
+          <span style={{ fontSize:11, fontFamily:"monospace", padding:"2px 10px",
+            background: activeTable === "user_data" ? "rgba(16,185,129,0.12)" : "rgba(79,70,229,0.12)",
+            border:`1px solid ${activeTable === "user_data" ? "rgba(16,185,129,0.3)" : "rgba(79,70,229,0.3)"}`,
+            borderRadius:100,
+            color: activeTable === "user_data" ? "#10B981" : "#4F46E5" }}>
+            {activeTable === "user_data" ? "📄 Your CSV" : "🗄 Nykaa Campaigns"}
           </span>
         </div>
+        {activeTable === "user_data" && (
+          <button onClick={handleReset} style={{ fontSize:11, fontFamily:"monospace",
+            background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.25)",
+            color:"rgba(239,68,68,0.7)", borderRadius:8, padding:"4px 12px", cursor:"pointer" }}>
+            ✕ Reset to default
+          </button>
+        )}
+      </div>
+
+      {/* Drop zone */}
+      <div
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => { e.preventDefault(); setDragging(false); doUpload(e.dataTransfer.files[0]); }}
+        onClick={() => fileRef.current?.click()}
+        style={{
+          border:`1.5px dashed ${dragging ? "#06B6D4" : "rgba(79,70,229,0.3)"}`,
+          borderRadius:16, padding:"20px 24px",
+          background: dragging ? "rgba(6,182,212,0.05)" : "rgba(8,12,24,0.6)",
+          cursor:"pointer", transition:"all 0.25s", textAlign:"center",
+          boxShadow: dragging ? "0 0 30px rgba(6,182,212,0.1)" : "none"
+        }}>
+        <input ref={fileRef} type="file" accept=".csv" style={{ display:"none" }}
+          onChange={e => doUpload(e.target.files[0])}/>
+        {uploading ? (
+          <div style={{ color:"rgba(6,182,212,0.8)", fontFamily:"monospace", fontSize:13 }}>
+            ⏳ Uploading & indexing CSV...
+          </div>
+        ) : uploadInfo ? (
+          <div>
+            <div style={{ fontSize:13, color:"#10B981", fontFamily:"monospace", marginBottom:6 }}>
+              ✓ {uploadInfo.message}
+            </div>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", marginTop:8 }}>
+              {uploadInfo.columns?.slice(0,8).map(c => (
+                <span key={c.name} style={{ fontSize:10, fontFamily:"monospace",
+                  padding:"2px 8px", background:"rgba(16,185,129,0.08)",
+                  border:"1px solid rgba(16,185,129,0.2)", borderRadius:6, color:"rgba(16,185,129,0.8)" }}>
+                  {c.name}
+                </span>
+              ))}
+              {(uploadInfo.columns?.length || 0) > 8 && (
+                <span style={{ fontSize:10, color:"rgba(255,255,255,0.3)", fontFamily:"monospace", padding:"2px 8px" }}>
+                  +{uploadInfo.columns.length - 8} more
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.25)", fontFamily:"monospace", marginTop:10 }}>
+              Click or drop another CSV to replace
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize:22, marginBottom:8 }}>📂</div>
+            <div style={{ fontSize:13, color:"rgba(255,255,255,0.45)", fontFamily:"monospace" }}>
+              Drop your CSV here or <span style={{ color:"#06B6D4" }}>click to browse</span>
+            </div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.2)", fontFamily:"monospace", marginTop:6 }}>
+              Any CSV — sales, leads, events, finance... AI adapts automatically
+            </div>
+          </div>
+        )}
+      </div>
+      {uploadError && (
+        <div style={{ marginTop:8, fontSize:12, color:"rgba(239,68,68,0.8)", fontFamily:"monospace" }}>
+          ⚠️ {uploadError}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+// NEW: Chat Thread — shows conversation history below charts
+// ════════════════════════════════════════════════════════════
+function ChatThread({ history, onFollowUp, loading }) {
+  const [val, setVal]       = useState("");
+  const [focused, setFocused] = useState(false);
+
+  const submit = () => {
+    if (!val.trim() || loading) return;
+    onFollowUp(val.trim());
+    setVal("");
+  };
+
+  if (history.length === 0) return null;
+
+  return (
+    <div style={{ marginTop:32,
+      background:"rgba(8,12,24,0.85)", border:"1px solid rgba(79,70,229,0.2)",
+      borderRadius:20, padding:"22px 26px", animation:"fadeUp .4s ease" }}>
+      <div style={{ fontSize:10, color:"rgba(6,182,212,0.6)", fontFamily:"monospace",
+        letterSpacing:2.5, textTransform:"uppercase", marginBottom:16 }}>
+        💬 Conversation History
+      </div>
+
+      {/* Thread bubbles */}
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:18, maxHeight:280, overflowY:"auto" }}>
+        {history.map((msg, i) => (
+          <div key={i} style={{
+            alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+            maxWidth:"85%",
+            background: msg.role === "user" ? "rgba(79,70,229,0.18)" : "rgba(6,182,212,0.08)",
+            border:`1px solid ${msg.role === "user" ? "rgba(79,70,229,0.35)" : "rgba(6,182,212,0.2)"}`,
+            borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+            padding:"12px 16px",
+          }}>
+            <div style={{ fontSize:9, fontFamily:"monospace", letterSpacing:1.5,
+              textTransform:"uppercase", marginBottom:6,
+              color: msg.role === "user" ? "rgba(139,92,246,0.7)" : "rgba(6,182,212,0.6)" }}>
+              {msg.role === "user" ? "You" : "✦ AI Insight"}
+            </div>
+            <div style={{
+              fontSize: msg.role === "assistant" ? 13 : 12,
+              fontFamily: msg.role === "assistant" ? "'Sora',sans-serif" : "monospace",
+              color: msg.role === "user" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.88)",
+              lineHeight: msg.role === "assistant" ? 1.7 : 1.5,
+            }}>
+              {msg.content}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Follow-up input */}
+      <div style={{
+        display:"flex", gap:10, alignItems:"center",
+        background:"rgba(5,8,15,0.8)",
+        border:`1px solid ${focused ? "rgba(6,182,212,0.5)" : "rgba(79,70,229,0.25)"}`,
+        borderRadius:14, padding:"10px 16px", transition:"all 0.25s"
+      }}>
+        <span style={{ fontSize:14 }}>↩</span>
+        <input
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={e => e.key === "Enter" && submit()}
+          placeholder='Follow up: "Now filter to only Social Media campaigns..."'
+          style={{ flex:1, background:"transparent", border:"none", outline:"none",
+            color:"#fff", fontSize:13, fontFamily:"monospace", caretColor:"#06B6D4" }}
+        />
+        <button onClick={submit} disabled={!val.trim() || loading}
+          style={{
+            background: val.trim() && !loading ? "linear-gradient(135deg,#4F46E5,#06B6D4)" : "rgba(255,255,255,0.05)",
+            border:"none", borderRadius:10, padding:"8px 18px",
+            color: val.trim() && !loading ? "#fff" : "rgba(255,255,255,0.2)",
+            fontSize:12, fontWeight:700, fontFamily:"monospace",
+            cursor: val.trim() && !loading ? "pointer" : "not-allowed", transition:"all 0.2s"
+          }}>
+          {loading ? "..." : "Ask →"}
+        </button>
       </div>
     </div>
   );
 }
 
-// ── Navbar ────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// Navbar
+// ════════════════════════════════════════════════════════════
 function Navbar({ onHome }) {
   return (
     <nav style={{ position:"sticky", top:0, zIndex:100,
@@ -472,46 +524,45 @@ function Navbar({ onHome }) {
   );
 }
 
-// ── MAIN PAGE ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// MAIN PAGE
+// ════════════════════════════════════════════════════════════
 export default function DashboardPage({ onHome }) {
-  const [charts,       setCharts]       = useState([]);
-  const [loading,      setLoading]      = useState(false);
-  const [hasResults,   setHasResults]   = useState(false);
-  const [currentQuery, setCurrentQuery] = useState("");
-  const [inputVal,     setInputVal]     = useState("");
-  const [focused,      setFocused]      = useState(false);
-  const [error,        setError]        = useState(null);
-  const [kpis,         setKpis]         = useState(null);
+  const [charts,        setCharts]        = useState([]);
+  const [loading,       setLoading]       = useState(false);
+  const [hasResults,    setHasResults]    = useState(false);
+  const [currentQuery,  setCurrentQuery]  = useState("");
+  const [inputVal,      setInputVal]      = useState("");
+  const [focused,       setFocused]       = useState(false);
+  const [error,         setError]         = useState(null);
+  const [kpis,          setKpis]          = useState(null);
+  const [activeTable,   setActiveTable]   = useState("campaigns");
+  // ── NEW state ──────────────────────────────────────────────
+  const [chatHistory,   setChatHistory]   = useState([]);   // {role, content}[]
   const resultsRef = useRef(null);
 
-  const handleSubmit = async (q) => {
-    if (!q.trim() || loading) return;
-    const query = q.trim();
-    setCurrentQuery(query);
+  // ── Core fetch function shared by both initial query and follow-ups ──
+  const fetchDashboard = async (prompt, history) => {
     setLoading(true);
-    setCharts([]);
-    setHasResults(false);
     setError(null);
-    setKpis(null);
 
     try {
       const t0 = Date.now();
       const res = await fetch(`${API_URL}/generate-dashboard`, {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ prompt: query }),
+        body: JSON.stringify({ prompt, history }),
       });
       const result = await res.json();
       const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
 
       if (!res.ok) {
-        setError(result.error || "Something went wrong. Please try again.");
-        setLoading(false);
+        setError(result.error || "Something went wrong.");
         return;
       }
 
       const chartObj = {
-        title:       result.title || query,
+        title:       result.title || prompt,
         data:        result.data  || [],
         defaultType: result.chart_type || "bar",
         xKey:        result.x_axis,
@@ -531,9 +582,15 @@ export default function DashboardPage({ onHome }) {
         { label:"Peak",       value:fmt(peak),     c:"#8B5CF6" },
         { label:"Query Time", value:`${elapsed}s`, c:"#F59E0B" },
       ]);
-
       setCharts([chartObj]);
       setHasResults(true);
+
+      // Append to chat history: user prompt + plain-English insight
+      setChatHistory(prev => [
+        ...prev,
+        { role:"user",      content: prompt },
+        { role:"assistant", content: result.insight || "Here's what the data shows — see the chart above." },
+      ]);
 
     } catch {
       setError("Cannot connect to backend. Is it running on http://127.0.0.1:8000?");
@@ -543,27 +600,44 @@ export default function DashboardPage({ onHome }) {
     }
   };
 
+  // ── Initial query (clears history) ───────────────────────────────────
+  const handleSubmit = (q) => {
+    if (!q.trim() || loading) return;
+    const query = q.trim();
+    setCurrentQuery(query);
+    setCharts([]);
+    setHasResults(false);
+    setKpis(null);
+    setChatHistory([]);   // fresh conversation
+    fetchDashboard(query, []);
+  };
+
+  // ── Follow-up query (sends full history for context) ─────────────────
+  const handleFollowUp = (q) => {
+    if (!q.trim() || loading) return;
+    setCurrentQuery(q.trim());
+    fetchDashboard(q.trim(), chatHistory);
+  };
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
         *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
         html, body { background:#05080f; font-family:'Sora',sans-serif; overflow-x:hidden; margin:0; }
-
-        @keyframes fadeUp      { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn      { from{opacity:0;transform:translateY(28px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes spin        { to{transform:rotate(360deg)} }
-        @keyframes bounce      { 0%,80%,100%{transform:scale(0.3);opacity:.3} 40%{transform:scale(1);opacity:1} }
-        @keyframes shimmer     { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        @keyframes blink       { 0%,100%{opacity:1} 50%{opacity:0.25} }
-        @keyframes drift1      { 0%,100%{transform:translate(0,0)} 50%{transform:translate(28px,-18px)} }
-        @keyframes drift2      { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-22px,28px)} }
-        @keyframes drift3      { 0%,100%{transform:translate(0,0)} 50%{transform:translate(18px,14px)} }
-        @keyframes scanRight   { 0%{left:-100%} 100%{left:200%} }
-        @keyframes shimmerBar  { 0%,100%{opacity:0.45} 50%{opacity:0.9} }
-        @keyframes ghostBar    { 0%,100%{opacity:0.25} 50%{opacity:0.65} }
-        @keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes cardIn   { from{opacity:0;transform:translateY(28px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes spin     { to{transform:rotate(360deg)} }
+        @keyframes bounce   { 0%,80%,100%{transform:scale(0.3);opacity:.3} 40%{transform:scale(1);opacity:1} }
+        @keyframes shimmer  { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes blink    { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        @keyframes drift1   { 0%,100%{transform:translate(0,0)} 50%{transform:translate(28px,-18px)} }
+        @keyframes drift2   { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-22px,28px)} }
+        @keyframes drift3   { 0%,100%{transform:translate(0,0)} 50%{transform:translate(18px,14px)} }
+        @keyframes scanRight{ 0%{left:-100%} 100%{left:200%} }
+        @keyframes shimmerBar{ 0%,100%{opacity:0.45} 50%{opacity:0.9} }
+        @keyframes ghostBar { 0%,100%{opacity:0.25} 50%{opacity:0.65} }
+        @keyframes arrowBounce{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
         .grad-text {
           background:linear-gradient(135deg,#fff 0%,#06B6D4 40%,#4F46E5 80%,#8B5CF6 100%);
           background-size:250% auto;
@@ -577,7 +651,6 @@ export default function DashboardPage({ onHome }) {
       `}</style>
 
       <div style={{ minHeight:"100vh", background:"#05080f", color:"#fff", overflowX:"hidden" }}>
-
         {/* Background */}
         <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0 }}>
           <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%" }}>
@@ -602,7 +675,7 @@ export default function DashboardPage({ onHome }) {
 
           {/* Hero */}
           <div style={{ width:"100%", display:"flex", flexDirection:"column",
-            alignItems:"center", textAlign:"center", padding:"70px 24px 50px" }}>
+            alignItems:"center", textAlign:"center", padding:"70px 24px 40px" }}>
 
             <div style={{ display:"inline-flex", alignItems:"center", gap:8,
               background:"rgba(79,70,229,0.1)", border:"1px solid rgba(79,70,229,0.28)",
@@ -622,8 +695,16 @@ export default function DashboardPage({ onHome }) {
 
             <p style={{ fontSize:15, color:"rgba(255,255,255,0.36)", maxWidth:460,
               lineHeight:1.9, marginBottom:38, animation:"fadeUp .5s ease .15s both" }}>
-              Ask any marketing question in plain English and get instant interactive dashboards powered by AI.
+              Ask any data question in plain English and get instant interactive dashboards.
+              Upload your own CSV or use the built-in dataset.
             </p>
+
+            {/* ── CSV Upload Panel ── */}
+            <CSVUploadPanel
+              activeTable={activeTable}
+              onUploadSuccess={() => setActiveTable("user_data")}
+              onReset={() => setActiveTable("campaigns")}
+            />
 
             {/* Query input */}
             <div style={{ width:"100%", maxWidth:760, animation:"fadeUp .5s ease .2s both" }}>
@@ -639,7 +720,6 @@ export default function DashboardPage({ onHome }) {
                 <div style={{ position:"absolute", top:0, left:0, right:0, height:1,
                   background:`linear-gradient(90deg,transparent,${focused?"rgba(6,182,212,0.7)":"rgba(79,70,229,0.4)"},transparent)`,
                   transition:"all 0.3s" }}/>
-
                 <div style={{ display:"flex", alignItems:"center", gap:14 }}>
                   <div style={{ width:38, height:38, borderRadius:11,
                     background:"linear-gradient(135deg,#4F46E5,#06B6D4)",
@@ -651,7 +731,9 @@ export default function DashboardPage({ onHome }) {
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
                     onKeyDown={e => e.key === "Enter" && handleSubmit(inputVal)}
-                    placeholder="Ask your marketing question..."
+                    placeholder={activeTable === "user_data"
+                      ? "Ask anything about your uploaded CSV..."
+                      : "Ask your marketing question..."}
                     style={{ flex:1, background:"transparent", border:"none", outline:"none",
                       color:"#fff", fontSize:15, fontFamily:"'Sora',sans-serif", caretColor:"#06B6D4" }}
                   />
@@ -670,42 +752,38 @@ export default function DashboardPage({ onHome }) {
                       fontFamily:"'Sora',sans-serif", transition:"all 0.3s", flexShrink:0,
                       boxShadow: inputVal.trim()&&!loading ? "0 4px 22px rgba(79,70,229,0.5)" : "none",
                       whiteSpace:"nowrap"
-                    }}
-                    onMouseEnter={e => { if(inputVal.trim()&&!loading){ e.currentTarget.style.transform="scale(1.04)"; e.currentTarget.style.boxShadow="0 6px 30px rgba(79,70,229,0.7)"; }}}
-                    onMouseLeave={e => { e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.boxShadow=inputVal.trim()&&!loading?"0 4px 22px rgba(79,70,229,0.5)":"none"; }}
-                  >
+                    }}>
                     {loading ? "Analyzing..." : "Generate Insights →"}
                   </button>
                 </div>
-
-                {/* Chips */}
-                <div style={{ marginTop:14, paddingTop:13, borderTop:"1px solid rgba(255,255,255,0.05)",
-                  display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
-                  <span style={{ fontSize:10, color:"rgba(255,255,255,0.2)", fontFamily:"monospace", flexShrink:0 }}>Try:</span>
-                  {EXAMPLE_PROMPTS.map(p => (
-                    <span key={p} onClick={() => setInputVal(p)}
-                      style={{ fontSize:11, color:"rgba(6,182,212,0.5)", fontFamily:"monospace",
-                        cursor:"pointer", padding:"3px 11px", background:"rgba(6,182,212,0.05)",
-                        borderRadius:8, border:"1px solid rgba(6,182,212,0.12)",
-                        transition:"all 0.2s", whiteSpace:"nowrap" }}
-                      onMouseEnter={e => { e.currentTarget.style.background="rgba(6,182,212,0.12)"; e.currentTarget.style.color="#06B6D4"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background="rgba(6,182,212,0.05)"; e.currentTarget.style.color="rgba(6,182,212,0.5)"; }}
-                    >{p}</span>
-                  ))}
-                </div>
+                {/* Chips — hide for custom CSV since columns differ */}
+                {activeTable !== "user_data" && (
+                  <div style={{ marginTop:14, paddingTop:13, borderTop:"1px solid rgba(255,255,255,0.05)",
+                    display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+                    <span style={{ fontSize:10, color:"rgba(255,255,255,0.2)", fontFamily:"monospace", flexShrink:0 }}>Try:</span>
+                    {EXAMPLE_PROMPTS.map(p => (
+                      <span key={p} onClick={() => setInputVal(p)}
+                        style={{ fontSize:11, color:"rgba(6,182,212,0.5)", fontFamily:"monospace",
+                          cursor:"pointer", padding:"3px 11px", background:"rgba(6,182,212,0.05)",
+                          borderRadius:8, border:"1px solid rgba(6,182,212,0.12)",
+                          transition:"all 0.2s", whiteSpace:"nowrap" }}
+                        onMouseEnter={e => { e.currentTarget.style.background="rgba(6,182,212,0.12)"; e.currentTarget.style.color="#06B6D4"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background="rgba(6,182,212,0.05)"; e.currentTarget.style.color="rgba(6,182,212,0.5)"; }}
+                      >{p}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Results */}
           <div ref={resultsRef} style={{ width:"100%", maxWidth:1400, margin:"0 auto", padding:"0 48px 120px" }}>
-
             {error && <ErrorBanner message={error} onDismiss={() => setError(null)}/>}
             {loading && <Loader/>}
 
             {!loading && hasResults && charts.length > 0 && (
               <div style={{ animation:"fadeUp .5s ease" }}>
-
                 {/* Results header */}
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
                   marginBottom:28, paddingBottom:18, borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
@@ -750,16 +828,19 @@ export default function DashboardPage({ onHome }) {
                   </div>
                 )}
 
-                {/* Full width chart */}
+                {/* Charts */}
                 <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:24 }}>
-                  {charts.map((chart, i) => (
-                    <ChartCard key={i} dataset={chart} index={i}/>
-                  ))}
+                  {charts.map((chart, i) => <ChartCard key={i} dataset={chart} index={i}/>)}
                 </div>
+
+                {/* ── Chat Thread for follow-up questions ── */}
+                <ChatThread
+                  history={chatHistory}
+                  onFollowUp={handleFollowUp}
+                  loading={loading}
+                />
               </div>
             )}
-
-            {!loading && !hasResults && !error && <EmptyState/>}
           </div>
         </div>
       </div>
