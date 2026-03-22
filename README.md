@@ -129,3 +129,6 @@ npm start
 
 * Software Developer | AI/ML Enthusiast
 * Focused on building intelligent, data-driven systems
+  
+GitHub: @vahini_chilukamarri
+LinkedIn: Venkata Vahini Chilukamarri
