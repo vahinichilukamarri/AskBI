@@ -133,3 +133,12 @@ npm start
 GitHub: @vahini_chilukamarri
 
 LinkedIn: Venkata Vahini Chilukamarri
+
+**Parinamika Bhanu**
+
+* Software Developer | AI/ML Enthusiast
+* Creating efficient solutions through clean code and smart design
+
+Github: Parinamika-13
+
+LinkedIn: Parinamika Bhanu Chanamala
