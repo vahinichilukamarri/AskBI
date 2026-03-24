@@ -139,6 +139,6 @@ LinkedIn: Venkata Vahini Chilukamarri
 * Software Developer | AI/ML Enthusiast
 * Creating efficient solutions through clean code and smart design
 
-Github: Parinamika-13
+Github: @Parinamika-13
 
 LinkedIn: Parinamika Bhanu Chanamala
